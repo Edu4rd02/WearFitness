@@ -3,6 +3,7 @@ package com.example.wearfitness.presentation
 import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Build
+import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -41,12 +42,15 @@ import androidx.wear.compose.material3.Button
 import androidx.wear.compose.material3.ButtonDefaults
 import androidx.wear.compose.material3.MaterialTheme
 import androidx.wear.compose.material3.Text
+import com.example.shared.data.FirebaseRepository
 
 @Composable
 fun WearFitnessApp(
     heartRateSensorValue: Int,
-    hasHeartRateSensor: Boolean
+    hasHeartRateSensor: Boolean,
+    stepsGoalFromPhone: Int
 ){
+    val repository = FirebaseRepository()
     val navController = rememberNavController()
     val context = LocalContext.current
 
@@ -82,7 +86,7 @@ fun WearFitnessApp(
     }
 
     var steps by remember { mutableIntStateOf(30) }
-    var stepsGoal by remember { mutableIntStateOf(10000) }
+    var displayedStepsGoal by remember { mutableIntStateOf(stepsGoalFromPhone) }
     var calories by remember { mutableIntStateOf(25) }
     var caloriesGoal by remember { mutableIntStateOf(800) }
     var manualHeartRate by remember { mutableIntStateOf(78) }
@@ -93,6 +97,10 @@ fun WearFitnessApp(
         } else {
             manualHeartRate
         }
+
+    LaunchedEffect(stepsGoalFromPhone) {
+        displayedStepsGoal = stepsGoalFromPhone
+    }
 
     LaunchedEffect(
         displayedHeartRate,
@@ -151,11 +159,28 @@ fun WearFitnessApp(
                 DailyProgressScreen(
                     steps = steps,
                     calories = calories,
-                    stepsGoal = stepsGoal,
+                    stepsGoal = displayedStepsGoal,
                     caloriesGoal = caloriesGoal,
                     onAddStep = {
                         steps+=100
                         calories+=100
+
+                        repository.updateSteps(
+                            steps = steps.toLong(),
+                            onSuccess = {
+                                Log.d(
+                                    "WearableFirebase",
+                                    "Steps updated from watch"
+                                )
+                            },
+                            onError = { exception ->
+                                Log.e(
+                                    "WearableFirebase",
+                                    "Error updating steps",
+                                    exception
+                                )
+                            }
+                        )
                     }
                 )
             }
@@ -169,10 +194,10 @@ fun WearFitnessApp(
             }
             composable("modify") {
                 ModifyGoalScreen(
-                    stepsGoal = stepsGoal,
+                    stepsGoal = displayedStepsGoal,
                     caloriesGoal = caloriesGoal,
-                    onAddStepsGoal = { stepsGoal += 50 },
-                    onSubtractStepsGoal = { stepsGoal -= 50 },
+                    onAddStepsGoal = { displayedStepsGoal += 50 },
+                    onSubtractStepsGoal = { displayedStepsGoal -= 50 },
                     onAddCaloriesGoal = { caloriesGoal += 10 },
                     onSubtractCaloriesGoal = { caloriesGoal -= 10 }
                 )

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "229566989647",
+    "project_id": "mdi2-113-wearfitness-d747d",
+    "storage_bucket": "mdi2-113-wearfitness-d747d.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:229566989647:android:82accbcf234b3bf33b313a",
+        "android_client_info": {
+          "package_name": "com.example.wearfitness"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDi8R_2US4ajEMBamHNGiN_ed1juF-7lS8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
