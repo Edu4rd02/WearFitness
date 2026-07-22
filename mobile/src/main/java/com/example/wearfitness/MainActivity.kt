@@ -25,35 +25,30 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.DisposableEffectResult
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.platform.LocalContext
 import com.example.shared.data.FirebaseRepository
-import com.example.shared.model.FitnessData
 
 class MainActivity : ComponentActivity() {
-
     override fun onCreate(
         savedInstanceState: Bundle?
     ) {
         super.onCreate(savedInstanceState)
 
+        val repository = FirebaseRepository()
+
         setContent {
             MaterialTheme {
-                PhoneCompanionApp()
+                PhoneCompanionApp(repository = repository)
             }
         }
     }
 }
 
 @Composable
-fun PhoneCompanionApp() {
-    val repository = remember { FirebaseRepository() }
-
-    var fitnessData by remember {
-        mutableStateOf(FitnessData(
-            dailyGoal = 10000L,
-            steps = 0L,
-            heartRate = 78
-        ))
-    }
+fun PhoneCompanionApp(repository: FirebaseRepository) {
+    val context = LocalContext.current
 
     var stepsGoal by remember {
         mutableIntStateOf(10000)
@@ -63,20 +58,19 @@ fun PhoneCompanionApp() {
         mutableStateOf("Not sent")
     }
 
-    DisposableEffect(Unit) {
-        val listener = repository.listenToFitnessData(
-            onDataChanged = { data ->
-                fitnessData = data
-                stepsGoal = data.dailyGoal.toInt()
+    DisposableEffect(repository) {
+        val listenerRegistration = repository.listenToFitnessData(
+            onDataChanged = { fitnessData ->
+                stepsGoal = fitnessData.dailyGoal.toInt()
+                sendStatus = "Goal received from Firebase: $stepsGoal"
             },
-            onError = { exception ->
-                Log.e("PhoneCompanionApp", "Error listening to fitness data", exception)
+            onError = {exception ->
+                sendStatus = "Firebase listener error: ${exception.message ?: "Unknown error"}"
             }
         )
-        onDispose {
-            listener.remove()
-        }
+        onDispose { listenerRegistration.remove() }
     }
+
 
     Column(
         modifier = Modifier
@@ -95,18 +89,6 @@ fun PhoneCompanionApp() {
 
         Spacer(
             modifier = Modifier.height(24.dp)
-        )
-
-        Text(
-            text = "Current Steps",
-            style =
-                MaterialTheme.typography.titleMedium
-        )
-
-        Text(
-            text = fitnessData.steps.toString(),
-            style =
-                MaterialTheme.typography.headlineSmall
         )
 
         Spacer(
@@ -169,21 +151,39 @@ fun PhoneCompanionApp() {
         Button(
             onClick = {
                 sendStatus = "Sending..."
-
-                repository.updateDailyGoal(
-                    dailyGoal = stepsGoal.toLong(),
+                sendStepsGoalToWatch(
+                    context = context,
+                    stepsGoal = stepsGoal,
                     onSuccess = {
-                        sendStatus = "Sent $stepsGoal steps goal to watch"
+                        sendStatus = "Sent $stepsGoal to the watch"
                     },
                     onError = { error ->
-                        sendStatus = "Error: ${error.message}"
-                    }
+                        sendStatus = "Error: $error" }
                 )
             }
         ) {
             Text("Send Goal to Watch")
         }
 
+        Spacer(
+            modifier = Modifier.height(12.dp)
+        )
+        Button(
+            onClick = {
+                sendStatus = "Saving to Firebase..."
+                repository.updateDailyGoal(
+                    dailyGoal = stepsGoal.toLong(),
+                    onSuccess = {
+                        sendStatus = "Saved $stepsGoal in Firebase"
+                    },
+                    onError = { error ->
+                        sendStatus = "Firebase error: ${error.message ?: "Unknown"}"
+                    }
+                )
+            }
+        ) {
+            Text("Save to Firebase")
+        }
         Spacer(
             modifier = Modifier.height(16.dp)
         )

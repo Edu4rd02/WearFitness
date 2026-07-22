@@ -50,7 +50,6 @@ fun WearFitnessApp(
     hasHeartRateSensor: Boolean,
     stepsGoalFromPhone: Int
 ){
-    val repository = FirebaseRepository()
     val navController = rememberNavController()
     val context = LocalContext.current
 
@@ -164,23 +163,6 @@ fun WearFitnessApp(
                     onAddStep = {
                         steps+=100
                         calories+=100
-
-                        repository.updateSteps(
-                            steps = steps.toLong(),
-                            onSuccess = {
-                                Log.d(
-                                    "WearableFirebase",
-                                    "Steps updated from watch"
-                                )
-                            },
-                            onError = { exception ->
-                                Log.e(
-                                    "WearableFirebase",
-                                    "Error updating steps",
-                                    exception
-                                )
-                            }
-                        )
                     }
                 )
             }

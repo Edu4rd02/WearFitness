@@ -80,6 +80,18 @@ class FirebaseRepository(private val database: FirebaseFirestore = FirebaseFires
         )
     }
 
+    fun updateHeartRate(
+        heartRate: Long,
+        onSuccess: () -> Unit = {},
+        onError: (Exception) -> Unit = {}
+    ){
+        updateFields(
+            fields = mapOf(FirestoreConstants.FIELD_HEART_RATE to heartRate),
+            onSuccess = onSuccess,
+            onError = onError
+        )
+    }
+
     private fun updateFields (
         fields: Map<String, Any>,
         onSuccess: () -> Unit,
