@@ -31,6 +31,7 @@ class MainActivity : ComponentActivity() {
 
         repository = FirebaseRepository()
         createNotificationChannel(this)
+        // Code for final report
         heartRateSensorManager = HeartRateSensorManager(context = this, onHeartRateChange = {
             newHeartRate ->
                 heartRate = newHeartRate
